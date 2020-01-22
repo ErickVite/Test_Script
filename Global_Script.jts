@@ -1,0 +1,167 @@
+//*********************************************************************
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Green Point
+// Created by: Erick Vite
+// Test Area: 
+// Name: Global_Script.jts
+// Version 1.0
+// January 21, 2020
+// Contact: erick_vite@jabil.com
+//*********************************************************************
+
+//********** Global variables **************
+$Excel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\Test_Script\\hoja_de_cargado.xlsx");	//*** Direccion local del .xlsx ***
+$att = 0;																					//*** variable encargada de recorrer el No. de Rxxx ***	
+$cell = 2;																					//*** Variable donde se inicializa la celda del hoja_de_cargado.xlsx ***
+//********** Global variables **************
+//********** Global variables **************
+$EqAddr = "USB0::0x2A8D::0x0101::MY57507587::0::INSTR";
+
+$MinRange = 90;				//***
+$MaxRange = 120;			//***
+$SumaT = 0;
+$TotalMuestras =8;
+$exitW = 0;
+//********** Global variables **************
+
+call DMM_Initialise();
+call Excel();
+
+
+function Excel()
+{
+while($att <= 77)
+{
+
+$Value = ExcelGetCell($Excel,5,"A",$cell);
+UpdateStatus($Value);																	//*** R QUE SE ESTA CoMPARANDO ***
+
+($Found,$Column,$Row) = ExcelSearchForValue($Excel,4,"B","Z",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENCIA EN EL SHEET HOJA DE CARGADO ***
+
+$ValueCom = ExcelGetCell($Excel,4,"Q",$Row);											//*** VALOR DE LA R QUE SE COMPARARA ***
+UpdateStatus($ValueCom);
+($Found2,$Column2,$Row2) = ExcelSearchForValue($Excel,6,"A","AZ",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENSIA EN EL SHEET BOOM
+$ValueComBOOM = ExcelGetCell($Excel,6,"AM",$Row2);
+UpdateStatus($ValueComBOOM);
+
+//*** Set up variables max & min
+
+
+
+
+if($ValueCom == $ValueComBOOM)
+	{
+	UpdateStatus("Right Boom && Hoja de cargado");
+	$attemps = 0;
+	$Resistencia_a_medir = "Resistencia a medir:\t R" + $Value ;
+	//UpdateStatus("Resistencia a medir...");
+	
+
+	UpdateStatus("******************************");
+	$NoImagen = "C:\\Users\\2343690\\Desktop\\Test_Script\\Images\\R" + $Value + ".png";
+	UpdateStatus($NoImagen);
+	UpdateStatus("******************************");
+	
+	$ButtonText = OperatorPicturePromptSpecifyOptionsWithPosition($Resistencia_a_medir, $NoImagen, "CENTER", 870, 1700, "Continuar", 100, 100);
+	
+	call Measurement();
+		if(($MinRange < $FinalMeasurement)&& ($MaxRange > $FinalMeasurement))
+		{
+			UpdateStatus("RESISTENCIA CORRECTA!")
+			$text = "Pueba Correcta.";
+			$btn1Txt = "Continuar";
+			$btn2Txt = "";
+			$btn1Key = "F1";
+			$btn2Key = "F2";
+			$textSize = 20;
+			$opacity = 90;
+			$width = 800;
+			$height = 450;
+			$left = 300;
+			$top = 300;
+			$result = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+		}
+		if(($MinRange > $FinalMeasurement) || ($MaxRange < $FinalMeasurement))
+		{
+			UpdateStatus("RESISTENCIA CORRECTA!")
+			$text = "Pueba Incorrecta.";
+			$btn1Txt = "Continuar";
+			$btn2Txt = "Repetir";
+			$btn1Key = "F1";
+			$btn2Key = "F2";
+			$textSize = 20;
+			$opacity = 90;
+			$width = 800;
+			$height = 450;
+			$left = 300;
+			$top = 300;
+			$result = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+		}
+	}
+if($ValueCom != $ValueComBOOM)
+	{
+	UpdateStatus("Error");
+	}
+$att = $att + 1 ;
+$cell = $cell+1;
+UpdateStatus("*** Next ***");
+}
+}
+function DMM_Initialise()
+{
+	$DMM_Timeout = 100;
+	($DMM_Handle, $ConnectionStatus) = IviGPIB_OpenBool($EqAddr, $DMM_Timeout);
+	$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
+	return;
+}
+
+function DMM_MeasureResistance()
+{
+	$CommandString = "MEAS:RES?";
+	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+	SleepMilliseconds(850);
+	($ReplyString, $success) = IviGPIB_ReadBool($DMM_Handle);
+	$DMM_Resistance = Round($ReplyString,1);
+	return;
+}
+
+function Measurement()
+{
+$exitW = 0;
+$SumaT =0;
+		while($attemps < $TotalMuestras)
+		{
+		call DMM_MeasureResistance();
+		$Vfinal = $SumaT / $attemps;
+		UpdateStatus($DMM_Resistance);
+			if(($MinRange < $DMM_Resistance)&& ($MaxRange > $DMM_Resistance) && ($exitW < 5))
+			{
+			$SumaT = $SumaT + $DMM_Resistance;
+			$exitW = $exitW + 1;
+			}		
+		
+			if($attemps > 14 && ($MinRange > $Vfinal || $MaxRange < $Vfinal))
+			{
+			UpdateStatus("***  Error ***")
+			
+			}
+		$attemps = $attemps + 1;
+		
+		if($attemps >= $TotalMuestras && ($MinRange < $DMM_Resistance < $MinRange))
+			{
+			
+			UpdateStatus("***  VF ***")
+			UpdateStatus($Vfinal)
+			UpdateStatus("***  Vf ***")
+			}
+		}
+		UpdateStatus("La suma total es:");
+		UpdateStatus($SumaT);
+		$FinalMeasurement = $SumaT /5;
+		UpdateStatus("El promedio es:");
+		UpdateStatus($FinalMeasurement);
+		
+		return;
+}
+

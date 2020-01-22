@@ -1,0 +1,66 @@
+//*********************************************************************
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Green Point
+// Created by: Erick Vite
+// Test Area: 
+// Name: Keysight_Voltage
+// Version 1.0
+// January 16, 2020
+// Contact: erick_vite@jabil.com
+//*********************************************************************
+
+call DMM_Initialise();
+call DMM_MeasureVoltage();
+call DMM_CleanUp();
+
+function DMM_Initialise()
+{
+	$DMM_Timeout = 1000;
+	$EqAddr = "USB0::0x2A8D::0x0101::MY57507587::0::INSTR";
+	($DMM_Handle, $ConnectionStatus) = IviGPIB_OpenBool($EqAddr, $DMM_Timeout);
+	$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
+	return;
+}
+
+function DMM_MeasureVoltage()
+{
+	
+	$int = 10;
+	$char = Ω;
+
+	$CommandString = "CONF:VOLT:DC ";
+	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+	$CommandString = "VOLT:IMP:AUTO ON";
+	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+	$CommandString = "READ?";
+	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+
+	SleepMilliseconds(100);
+	($ReplyString, $success) = IviGPIB_ReadBool($DMM_Handle);
+	
+	UpdateStatus("*********");
+	UpdateStatus($ReplyString);
+	UpdateStatus("********");
+
+	$success = StringIsNumeric($ReplyString);
+	if($success)
+	{
+		$DMM_Voltage = Round($ReplyString, 2);
+		UpdateStatus($DMM_Voltage);
+		return;
+	}
+	return;
+}
+
+function DMM_CleanUp()
+{
+	$ConnectionStatus = StringComparison($DMM_Handle,"","!=");
+	if ($ConnectionStatus)
+	{
+		$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
+		IviGPIB_Close($DMM_Handle);
+	}
+
+	return;
+}

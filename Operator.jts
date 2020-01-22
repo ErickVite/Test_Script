@@ -1,0 +1,24 @@
+//OperatorPicturePrompt("\nResistencia a medir:","C:\\Users\\2343690\\Desktop\\Test_Script\\Images\\R304.png","CENTER",870,1700);
+//$ButtonText = OperatorPicturePromptSpecifyOptions("Test Prompt", "C:\\Users\\2343690\\Desktop\\Test_Script\\Images\\R304.png", "CENTER", 500, 500, "red;green;blue");
+$x = "AAA";
+$ButtonText = OperatorPicturePromptSpecifyOptionsWithPosition("\n Resistencia a Medir $x", "C:\\Users\\2343690\\OneDrive - Jabil\\Test_Script\\Images\\R0301.png", "CENTER", 870, 1700, "red;green;blue", 100, 100);
+
+
+
+
+$text = "Pueba Correcta.";
+$btn1Txt = "Continuar";
+$btn2Txt = "Repetir prueba";
+$btn1Key = "F1";
+$btn2Key = "F2";
+$textSize = 20;
+$opacity = 90;
+$width = 800;
+$height = 450;
+$left = 300;
+$top = 300;
+
+$result = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+
+$outStr = "Button Pressed: " + $result;
+UpdateStatus($outStr);

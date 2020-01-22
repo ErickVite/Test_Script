@@ -1,0 +1,40 @@
+//*********************************************************************
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Enterprise
+// Created by: Erick Vite
+// Test Area: 
+// Name: example_excel
+// Version 1.0
+// January 16, 2020
+// Contact: erick_vite@jabil.com
+//*********************************************************************
+
+//"C:\\Users\\2343690\\Desktop\\script\\example_data.xlsx"
+
+$Excel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\script\\example_data.xlsx");
+($Found,$Column,$Row) = ExcelSearchForValue($Excel,1,"A","B",1,10,"Hola","FALSE");
+UpdateStatus($Found);
+UpdateStatus($Column);
+UpdateStatus($Row);
+
+$Measure = 5;
+ExcelSetCell($Excel,1,"A",5, $Measure);
+
+$Value = ExcelGetCell($Excel,1,"A",5);
+UpdateStatus($Value)
+
+$Value2 = ExcelGetCell($Excel,1,"B",5);
+UpdateStatus($Value)
+
+$MaxRange = $Measure + 1;
+//UpdateStatus($MaxRange);
+$MinRange = $Measure - 1;
+
+if(($Value > $MinRange) && ($Value < $MaxRange))
+{
+UpdateStatus("OK");
+}
+
+
+ExcelCloseFile($Excel);

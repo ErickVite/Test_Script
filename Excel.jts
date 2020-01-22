@@ -1,0 +1,58 @@
+//*********************************************************************
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Green Point
+// Created by: Erick Vite
+// Test Area: 
+// Name: Excel.jst
+// Version 1.0
+// January 16, 2020
+// Contact: erick_vite@jabil.com
+//*********************************************************************
+
+//C:\Users\2343690\Desktop\Test_Script\\Setup ENT31-005751-TOP_L703A REV. 02 JUPITER P5.1 V2 (1).xlsx
+
+$Excel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\Test_Script\\hoja_de_cargado.xlsx");
+$att = 0;
+$cell = 2;
+
+while($att <= 77)
+{
+
+$Value = ExcelGetCell($Excel,5,"A",$cell);
+UpdateStatus($Value);																	//*** R QUE SE ESTA CAOMPARANDO ***
+
+($Found,$Column,$Row) = ExcelSearchForValue($Excel,4,"B","Z",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENCIA EN EL SHEET HOJA DE CARGADO ***
+//UpdateStatus($Found);
+//UpdateStatus($Column);
+//UpdateStatus($Row);
+$ValueCom = ExcelGetCell($Excel,4,"Q",$Row);											//*** VALOR DE LA R QUE SE COMPARARA ***
+UpdateStatus($ValueCom);
+
+($Found2,$Column2,$Row2) = ExcelSearchForValue($Excel,6,"A","AZ",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENSIA EN EL SHEET BOOM
+//UpdateStatus($Found2);
+//UpdateStatus($Column2);
+//UpdateStatus($Row2);
+$ValueComBOOM = ExcelGetCell($Excel,6,"AM",$Row2);
+UpdateStatus($ValueComBOOM);
+
+$MIN = ExcelGetCell($Excel,4,"X",$Row);											//**** pueba de valores max and min
+
+$StringMIN = "Valor Minimo: " + $MIN + " Ohms";
+UpdateStatus($StringMIN);
+//$MAX = ExcelGetCell($Excel,4,"Y",$Row);											//**** pueba de valores max and min
+//UpdateStatus("VALOR MAXIMO" + $MAX);
+
+
+if($ValueCom == $ValueComBOOM)
+	{
+	UpdateStatus("Right");
+	}
+if($ValueCom != $ValueComBOOM)
+	{
+	UpdateStatus("Error");
+	}
+$att = $att + 1 ;
+$cell = $cell+1;
+UpdateStatus("*** Next ***");
+}
