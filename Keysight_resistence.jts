@@ -9,80 +9,72 @@
 // January 16, 2020
 // Contact: erick_vite@jabil.com
 //*********************************************************************
-
-//********** Global variables **************
-
-$EqAddr = "USB0::0x2A8D::0x0101::MY57507587::0::INSTR";
-$attemps = 0;
-$MinRange = 0;
-$MaxRange = 120;
-$SumaT = 0;
-$TotalMuestras =15;
-$exitW = 0;
-//********** Global variables **************
-
-call DMM_Initialise();
-call DMM_MeasureResistance();
-call Me();
-call DMM_CleanUp();
-
-function DMM_Initialise()
-{
+	$EqAddr = "USB0::0x2A8D::0x0101::MY57507507::0::INSTR";
 	$DMM_Timeout = 100;
 	($DMM_Handle, $ConnectionStatus) = IviGPIB_OpenBool($EqAddr, $DMM_Timeout);
 	$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
-	return;
-}
+	
+	$a = 0;
+	//$lowerLimit = 3000;
+	//$upperLimit = 3300;
 
-function DMM_MeasureResistance()
+	$success_measures = 0;
+	$count_success_measures = 0;
+	
+	$final_value = 0;
+	
+	$incorrect_measures = 0;
+	$incorrect_count_success_measures = 0;
+
+	
+
+
+End;
+
+function make_measurament()
 {
 	$CommandString = "MEAS:RES?";
 	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
 	SleepMilliseconds(850);
 	($ReplyString, $success) = IviGPIB_ReadBool($DMM_Handle);
-	$DMM_Resistance = Round($ReplyString,1);
+	$Resistance = Round($ReplyString,3);
+	//UpdateStatus($Resistance);
 	return;
 }
 
-function Me()
+function procese_res()
 {
-		while($attemps < $TotalMuestras)
+	while($a < 5)
+	{
+	call make_measurament();
+	
+	if(($Resistance > $lowerLimit) && ($Resistance < $upperLimit))
 		{
-		
-		call DMM_MeasureResistance();
-		$Vfinal = $SumaT / $attemps;
-		UpdateStatus($DMM_Resistance);
-			if(($MinRange < $DMM_Resistance)&& ($MaxRange > $DMM_Resistance) && ($exitW < 5))
-			{
-			$SumaT = $SumaT + $DMM_Resistance;
-			$exitW = $exitW + 1;
-			}		
-		
-			if($attemps > 14 && ($MinRange > $Vfinal || $MaxRange < $Vfinal))
-			{
-			UpdateStatus("***  Error ***")
-			
-			}
-		$attemps = $attemps + 1;
-		
-		if($attemps >= $TotalMuestras && ($MinRange < $DMM_Resistance < $MinRange))
-			{
-			
-			UpdateStatus("***  VF ***")
-			UpdateStatus($Vfinal)
-			UpdateStatus("***  Vf ***")
-			}
+			//success_measures
+			$success_measures = $success_measures + $Resistance;
+			$count_success_measures = $count_success_measures + 1;
+			$final_value = $success_measures / $count_success_measures;
+			//UpdateStatus($final_value);
 		}
-		UpdateStatus("La suma total es:");
-		UpdateStatus($SumaT);
-		$IMP = $SumaT /5;
-		UpdateStatus("El promedio es:");
-		UpdateStatus($IMP);
+	if(($Resistance < $lowerLimit) || ($Resistance > $upperLimit))
+		{
+			$incorrect_measures = $incorrect_measures + $Resistance;
+			$incorrect_count_success_measures = $incorrect_count_success_measures + 1;
+			$final_value = $incorrect_measures / $incorrect_count_success_measures;
+		}
+	$a = $a + 1;
+	}
+	
+	UpdateStatus($final_value);
+
+		// Record a voltage measurement and pass the test.
+	$measName = "Resistance";
+	$measUnit = "Ohm";
+	$parametric = true;
+	$failOnLimits = true;
+	RecordMeasurementWithLimits($measName, $final_value, $measUnit, $parametric, $lowerLimit, $upperLimit, $failOnLimits);
+	
+return;
 }
 
-function DMM_CleanUp()
-{
-		$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
-		IviGPIB_Close($DMM_Handle);	
-	return;
-}
+

@@ -1,0 +1,56 @@
+call DMM_Initialise();
+
+function DMM_MeasureResistance()
+{
+	$CommandString = "MEAS:RES?";
+	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+	SleepMilliseconds(850);
+	($ReplyString, $success) = IviGPIB_ReadBool($DMM_Handle);
+	$DMM_Resistance = Round($ReplyString,1);
+	return;
+}
+
+function Measurement()
+{
+$exitW = 0;
+$SumaT =0;
+$god = 0;
+		while($attemps < $TotalMuestras)
+		{
+		call DMM_MeasureResistance();
+		$Vfinal = $SumaT / $attemps;
+		UpdateStatus($DMM_Resistance);
+			
+			if(($MinRange < $DMM_Resistance)&& ($MaxRange > $DMM_Resistance) && ($exitW < 5))
+			{
+			$SumaT = $SumaT + $DMM_Resistance;
+			$exitW = $exitW + 1;
+			$god = 10;
+			}	
+					if(($MinRange > $DMM_Resistance) || ($MaxRange < $DMM_Resistance) && ($god == 0) )
+					{
+					$SumaT = $SumaT + $DMM_Resistance;
+					$exitW = $exitW + 1;
+					}	
+
+		
+			if($attemps > 14 && ($MinRange > $Vfinal || $MaxRange < $Vfinal))
+			{
+			UpdateStatus("***  Error ***")
+			
+			}
+		$attemps = $attemps + 1;
+		
+		if($attemps >= $TotalMuestras && ($MinRange < $DMM_Resistance < $MinRange))
+			{
+
+			}
+		}
+		UpdateStatus("La suma total es:");
+		UpdateStatus($SumaT);
+		$FinalMeasurement = $SumaT /5;
+		UpdateStatus("El promedio es:");
+		UpdateStatus($FinalMeasurement);
+		
+		return;
+}

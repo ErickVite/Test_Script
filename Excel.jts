@@ -10,8 +10,6 @@
 // Contact: erick_vite@jabil.com
 //*********************************************************************
 
-//C:\Users\2343690\Desktop\Test_Script\\Setup ENT31-005751-TOP_L703A REV. 02 JUPITER P5.1 V2 (1).xlsx
-
 $Excel = ExcelOpenFile("C:\\Users\\2343690\\OneDrive - Jabil\\Jupiter_docs\\hoja_de_cargado.xlsx");
 $att = 0;
 $cell = 2;
@@ -36,8 +34,7 @@ UpdateStatus($ValueCom);
 $ValueComBOOM = ExcelGetCell($Excel,6,"AM",$Row2);
 UpdateStatus($ValueComBOOM);
 
-$MIN = ExcelGetCell($Excel,4,"X",$Row);											//**** pueba de valores max and min
-
+$MIN = ExcelGetCell($Excel,4,"Y",$Row);											//**** pueba de valores max and min
 $StringMIN = "Valor Minimo: " + $MIN + " Ohms";
 UpdateStatus($StringMIN);
 //$MAX = ExcelGetCell($Excel,4,"Y",$Row);											//**** pueba de valores max and min

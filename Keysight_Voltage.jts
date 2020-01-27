@@ -17,7 +17,7 @@ call DMM_CleanUp();
 function DMM_Initialise()
 {
 	$DMM_Timeout = 1000;
-	$EqAddr = "USB0::0x2A8D::0x0101::MY57507587::0::INSTR";
+	$EqAddr = "USB0::0x2A8D::0x2F01::MY54407783::0::INSTR";
 	($DMM_Handle, $ConnectionStatus) = IviGPIB_OpenBool($EqAddr, $DMM_Timeout);
 	$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
 	return;
@@ -27,20 +27,20 @@ function DMM_MeasureVoltage()
 {
 	
 	$int = 10;
-	$char = Ω;
+	//$char = Ω;
 
-	$CommandString = "CONF:VOLT:DC ";
-	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
-	$CommandString = "VOLT:IMP:AUTO ON";
+	//$CommandString = "CONF:VOLT:DC ";
+	//$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+	$CommandString = "CONF RES";
 	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
 	$CommandString = "READ?";
 	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
 
-	SleepMilliseconds(100);
+	SleepMilliseconds(3100);
 	($ReplyString, $success) = IviGPIB_ReadBool($DMM_Handle);
 	
 	UpdateStatus("*********");
-	UpdateStatus($ReplyString);
+	UpdateStatus($success);
 	UpdateStatus("********");
 
 	$success = StringIsNumeric($ReplyString);

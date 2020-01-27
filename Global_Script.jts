@@ -11,15 +11,13 @@
 //*********************************************************************
 
 //********** Global variables **************
-$Excel = ExcelOpenFile("C:\\Users\\2343690\\OneDrive - Jabil\\Jupiter_docs\\hoja_de_cargado.xlsx");	//*** Direccion local del .xlsx ***
+$Excel = ExcelOpenFile("C:\\Users\\2343690\\OneDrive - Jabil\\Jupiter_docs\\Copy of hoja_de_cargado.xlsx");	//*** Direccion local del .xlsx ***
 $att = 0;																					//*** variable encargada de recorrer el No. de Rxxx ***	
 $cell = 2;																					//*** Variable donde se inicializa la celda del hoja_de_cargado.xlsx ***
 //********** Global variables **************
 //********** Global variables **************
-$EqAddr = "USB0::0x2A8D::0x0101::MY57507587::0::INSTR";
-
-$MinRange = 90;				//***
-$MaxRange = 120;			//***
+$EqAddr = "USB0::0x2A8D::0x0101::MY57507507::0::INSTR";
+$RepitTest = 0;
 $SumaT = 0;
 $TotalMuestras =8;
 $exitW = 0;
@@ -28,6 +26,11 @@ $exitW = 0;
 call DMM_Initialise();
 call Excel();
 
+function Initialize()
+{
+  UpdateStatus("hola jabil");
+  Sleep(5);
+}
 
 function Excel()
 {
@@ -46,12 +49,23 @@ $ValueComBOOM = ExcelGetCell($Excel,6,"AM",$Row2);
 UpdateStatus($ValueComBOOM);
 
 //*** Set up variables max & min
+$MIN = ExcelGetCell($Excel,4,"X",$Row);											//**** pueba de valores max and min
+$StringMIN = "Valor Minimo: " + $MIN + " Ohms";
+UpdateStatus($StringMIN);
+$MinRange = $MIN;
 
+$MAX = ExcelGetCell($Excel,4,"Y",$Row);											//**** pueba de valores max and min
+$StringMAX = "Valor Maximo: " + $MAX + " Ohms";
+UpdateStatus($StringMAX);
+$MaxRange = $MAX;
 
+//*** Set up variables max & min
 
 
 if($ValueCom == $ValueComBOOM)
-	{
+	{ 
+	Label Repite:
+	
 	UpdateStatus("Right Boom && Hoja de cargado");
 	$attemps = 0;
 	$Resistencia_a_medir = "Resistencia a medir:\t R" + $Value ;
@@ -84,8 +98,8 @@ if($ValueCom == $ValueComBOOM)
 		}
 		if(($MinRange > $FinalMeasurement) || ($MaxRange < $FinalMeasurement))
 		{
-			UpdateStatus("RESISTENCIA CORRECTA!")
-			$text = "Pueba Incorrecta.";
+			UpdateStatus("RESISTENCIA INCORRECTA!")
+			$text = "Pueba INCORRECTA.";
 			$btn1Txt = "Continuar";
 			$btn2Txt = "Repetir";
 			$btn1Key = "F1";
@@ -96,7 +110,40 @@ if($ValueCom == $ValueComBOOM)
 			$height = 450;
 			$left = 300;
 			$top = 300;
-			$result = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+			$resultInc = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+			
+			if($resultInc == "Repetir")
+			{
+				while($RepitTest <= 2)
+				{
+				call DMM_MeasureResistance();
+				$RepitTest = $RepitTest + 1;
+				UpdateStatus("-----------------");
+				UpdateStatus($RepitTest);
+				UpdateStatus("-----------------");
+				
+					if($RepitTest > 2)
+					{
+						//UpdateStatus("RESISTENCIA INCORRECTA!")
+						$text = "Ultimo inteto!";
+						$btn1Txt = "Continuar";
+						$btn2Txt = "";
+						$btn1Key = "F1";
+						$btn2Key = "F2";
+						$textSize = 20;
+						$opacity = 90;
+						$width = 800;
+						$height = 450;
+						$left = 300;
+						$top = 300;
+						$resultInc = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+						$RepitTest =0;
+					}
+				goto Repite;
+				
+				}
+			
+			}
 		}
 	}
 if($ValueCom != $ValueComBOOM)
@@ -130,16 +177,28 @@ function Measurement()
 {
 $exitW = 0;
 $SumaT =0;
+$god = 0;
 		while($attemps < $TotalMuestras)
 		{
 		call DMM_MeasureResistance();
 		$Vfinal = $SumaT / $attemps;
 		UpdateStatus($DMM_Resistance);
+			
 			if(($MinRange < $DMM_Resistance)&& ($MaxRange > $DMM_Resistance) && ($exitW < 5))
 			{
 			$SumaT = $SumaT + $DMM_Resistance;
 			$exitW = $exitW + 1;
-			}		
+			$god = 10;
+			}	
+					if(($MinRange > $DMM_Resistance) || ($MaxRange < $DMM_Resistance) && ($god == 0) )
+					{
+					$SumaT = $SumaT + $DMM_Resistance;
+					$exitW = $exitW + 1;
+					//UpdateStatus("***  IF ***")
+					//UpdateStatus($SumaT)
+					//UpdateStatus("***  IF ***\n")
+					}	
+
 		
 			if($attemps > 14 && ($MinRange > $Vfinal || $MaxRange < $Vfinal))
 			{
@@ -164,4 +223,5 @@ $SumaT =0;
 		
 		return;
 }
+
 

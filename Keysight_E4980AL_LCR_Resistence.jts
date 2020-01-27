@@ -1,0 +1,59 @@
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Green Point
+// Software Name: Keysight_E4980AL_LCR_Resistence
+// Created by: Erick Vite
+// Contact: erick_vite@jabil.com
+// Software Ver: 0.0.0 (Dev)
+// January 24, 2020
+
+//********** Global variables **************
+$EqAddr = "USB0::0x2A8D::0x2F01::MY54407783::0::INSTR";
+//********** Global variables **************
+
+//call DMM_MeasureResistance();
+
+function DMM_MeasureResistance_LCR()
+{
+
+	$DMM_Timeout = 1000;
+	($DMM_Handle, $ConnectionStatus) = IviVISA_OpenBool($EqAddr, $DMM_Timeout);
+
+	$CommandString = "*RST";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	$CommandString = "FUNC:IMP RX";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	$CommandString = ":FETC:IMP:CORR";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+		$CommandString = "*IDN?";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	SleepMilliseconds(1000);
+
+	($ReplyString, $success) =  IviVISA_ReadBool($DMM_Handle);
+	//UpdateStatus("*");
+	UpdateStatus($ReplyString);
+	//UpdateStatus("*");
+	
+	//UpdateStatus("***");
+	//UpdateStatus($success);
+	//UpdateStatus("***");
+	
+$stringToSplit =$ReplyString ;
+$splitChar = ",";
+$numSplits = 2;
+
+($spl1, $spl2) = StringSplit($stringToSplit, $splitChar, $numSplits);
+	//UpdateStatus($spl1); 
+	//$DMM_Resistance = Round($spl1,5);
+	//UpdateStatus($DMM_Resistance);
+	
+$measName = "Resisitence";
+$measUnit = "Ohm";
+$parametric = true;
+$lowerLimit = 3000;
+$upperLimit = 3500;
+$failOnLimits = true;
+
+//RecordMeasurementWithLimits($measName, $DMM_Resistance, $measUnit, $parametric, $lowerLimit, $upperLimit, $failOnLimits);
+}

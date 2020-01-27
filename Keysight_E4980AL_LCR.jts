@@ -1,0 +1,104 @@
+//*********************************************************************
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Green Point
+// Created by: Erick Vite
+// Test Area: 
+// Name: Keysight_E4980AL_LCR
+// Version 1.0
+// January 23, 2020
+// Contact: erick_vite@jabil.com
+//*********************************************************************
+
+//********** Global variables **************
+$EqAddr = "USB0::0x2A8D::0x2F01::MY54407783::0::INSTR";
+//********** Global variables **************
+
+
+call DMM_MeasureResistance();
+
+
+
+function DMM_MeasureResistance()
+{
+
+	$DMM_Timeout = 1000;
+	($DMM_Handle, $ConnectionStatus) = IviVISA_OpenBool($EqAddr, $DMM_Timeout);
+
+	$CommandString = "DISP:PAGE MSET";										
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = ":DISP:LINE Control_Ex";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "FUNC:IMP RX";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+
+	$CommandString = "FREQ 1230";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "VOLT 1.01";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "TRIG:SOUR BUS";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "AMPL:ALC ON";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "OUTP:DC:ISOL ON";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "FUNC:IMP:RANG 1E4";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "BIAS:VOLT 5";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "APER LONG,4";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+
+	$CommandString = "FUNC:SMON:VAC ON";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "FUNC:SMON:IAC ON";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "TRIG:DEL 5";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	$CommandString = "FUNC:DEV1:MODE ABS";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+		$CommandString = "FUNC:DEV2:MODE ABS";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+		$CommandString = "FUNC:DEV1:REF 10000";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+		$CommandString = ":FETC:IMP:CORR?";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	
+	
+	SleepMilliseconds(1000);
+
+	($ReplyString, $success) =  IviVISA_ReadBool($DMM_Handle);
+	UpdateStatus("*");
+	UpdateStatus($ReplyString);
+	UpdateStatus("*");
+	
+	UpdateStatus("***");
+	UpdateStatus($success);
+	UpdateStatus("***");
+	
+$stringToSplit =$ReplyString ;
+$splitChar = ",";
+$numSplits = 2;
+
+($spl1, $spl2) = StringSplit($stringToSplit, $splitChar, $numSplits);
+//UpdateStatus($spl1); 
+	$DMM_Resistance = Round($spl1,5);
+	UpdateStatus($DMM_Resistance);
+
+}
+
