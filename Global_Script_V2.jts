@@ -9,26 +9,44 @@ $attemp_function_excel = 0;
 $cell = 2;							//Celda en la que se inicia el loop
 //********** Global variables **************
 $prompt = "Seleccione el instrumento a utilizar: ";
-$options = "Keysight Technologies, E4980AL LCR Meter;Keysight Technologies,34465A Multimeter";
+$options = "LCR;Multimeter";
 $selected = OperatorInputComboBox($prompt, $options);
 
-if($selected == "Keysight Technologies, E4980AL LCR Meter")
+
+if($selected == "LCR")
 	{
 	$EqAddr = "USB0::0x2A8D::0x2F01::MY54407783::0::INSTR";
 	$instrument = "Keysight Technologies, E4980AL LCR Meter";
 	}
 	
-if($selected == "Keysight Technologies,34465A Multimeter")
+if($selected == "Multimeter")
 	{
 	$EqAddr = "USB0::0x2A8D::0x0101::MY57507507::0::INSTR";
 	$instrument = "Keysight Technologies,34465A Multimeter";
 	}
 
 	//#include<"C:\\Users\2343690\\OneDrive - Jabil\\Test_Script\\Keysight_E4980AL_LCR_Resistence.jts">
-	#include<"C:\Users\\2343690\OneDrive - Jabil\\Test_Script\\Keysight_resistence.jts">
+	//#include<"C:\Users\\2343690\OneDrive - Jabil\\Test_Script\\Keysight_resistence.jts">
+	$DMM_Timeout = 100;
+	($DMM_Handle, $ConnectionStatus) = IviGPIB_OpenBool($EqAddr, $DMM_Timeout);
+	$success = IviGPIB_WriteBool($DMM_Handle, "*RST");
 	
-call initialize_instrument();
-call excel_resistance();
+	
+
+
+if($selected == "Multimeter")
+	{
+	call initialize_instrument();
+	call excel_resistance();
+	}
+	
+	if($selected == "LCR")
+	{
+	UpdateStatus("End");
+	goto end;
+	}
+
+End;
 
 function initialize_instrument()
 {
@@ -66,15 +84,88 @@ while($attemp_function_excel <= 77)
 	
 	if($Value_hoja_cargado == $ValueComBOOM)
 	{
-	$attemps = 0;
+	//$attemps = 0;
+	$count_Repetir = 0;
+	Label Repetir:
+	
+	
+	
+	
+	///***
+	
+	$count_while_procese_res = 0;
+	//$lowerLimit = 3000;
+	//$upperLimit = 3300;
+
+	$success_measures = 0;
+	$count_success_measures = 0;
+	
+	$final_value = 0;
+	
+	$incorrect_measures = 0;
+	$incorrect_count_success_measures = 0;
+
+///***
+	
+	
+	
+	
 	$Resistencia_a_medir = "Resistencia a medir:\t R" + $Value ;
 	$NoImagen = "C:\\Users\\2343690\\OneDrive - Jabil\\Jupiter_docs\\Images\\R" + $Value + ".png";
 	$ButtonText = OperatorPicturePromptSpecifyOptionsWithPosition($Resistencia_a_medir, $NoImagen, "CENTER", 870, 1700, "Continuar", 100, 100);
 
 	$lowerLimit = $MinRange;
 	$upperLimit = $MaxRange;
+	call procese_res();	//****************************************************
+
 	
-	call procese_res();
+		if(($final_value > $lowerLimit) && ($final_value < $upperLimit))
+		{
+			UpdateStatus("RESISTENCIA CORRECTA!")
+			$text = "Pueba Correcta.";
+			$btn1Txt = "Continuar";
+			$btn2Txt = "";
+			$btn1Key = "F1";
+			$btn2Key = "F2";
+			$textSize = 20;
+			$opacity = 90;
+			$width = 800;
+			$height = 450;
+			$left = 300;
+			$top = 300;
+			$result = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+		}
+		
+		if(($final_value < $lowerLimit) || ($final_value > $upperLimit))
+		{
+		
+			UpdateStatus("RESISTENCIA INCORRECTA!")
+			$nc = 2 - $count_Repetir;
+			$stInc = "Prueba INCORRECTA " + $nc + " intentos restantes";
+			$text = $stInc;
+			$btn1Txt = "Continuar";
+			$btn2Txt = "Repetir";
+			$btn1Key = "F1";
+			$btn2Key = "F2";
+			$textSize = 20;
+			$opacity = 90;
+			$width = 800;
+			$height = 450;
+			$left = 300;
+			$top = 300;
+			$resultInc = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+			
+				if(($resultInc == "Repetir") && $count_Repetir < 2)
+				{
+				//UpdateStatus("REPETIR")
+			
+				$count_Repetir = $count_Repetir + 1;
+					goto Repetir;
+				}
+		
+		}
+		
+		
 	
 	UpdateStatus("Igual")
 	}
@@ -97,14 +188,66 @@ while($attemp_function_excel <= 77)
 }
 	
 	//*** 
+		$count_while_procese_res = 0;
+	$success_measures = 0;
+	$count_success_measures = 0;
+	$final_value = 0;
+	$incorrect_measures = 0;
+	$incorrect_count_success_measures = 0;
+	
 	$attemp_function_excel = $attemp_function_excel + 1;
 	$cell = $cell + 1;
 	//*** 
 	}
 }
 
+function make_measurament()
+{
+	$CommandString = "MEAS:RES?";
+	$success = IviGPIB_WriteBool($DMM_Handle, $CommandString);
+	SleepMilliseconds(850);
+	($ReplyString, $success) = IviGPIB_ReadBool($DMM_Handle);
+	$Resistance = Round($ReplyString,3);
+	//UpdateStatus($Resistance);
+	return;
+}
 
+function procese_res()
+{
+	while( $count_while_procese_res < 5)
+	{
+	call make_measurament();
+	
+	if(($Resistance > $lowerLimit) && ($Resistance < $upperLimit))
+		{
+			//success_measures
+			$success_measures = $success_measures + $Resistance;
+			$count_success_measures = $count_success_measures + 1;
+			$final_value = $success_measures / $count_success_measures;
+			//UpdateStatus($final_value);
+		}
+	if(($Resistance < $lowerLimit) || ($Resistance > $upperLimit))
+		{
+			$incorrect_measures = $incorrect_measures + $Resistance;
+			$incorrect_count_success_measures = $incorrect_count_success_measures + 1;
+			$final_value = $incorrect_measures / $incorrect_count_success_measures;
+		}
+	$count_while_procese_res = $count_while_procese_res + 1;
+	}
+	
+	UpdateStatus($final_value);
 
+		// Record a voltage measurement and pass the test.
+	$measName = "Resistance";
+	$measUnit = "Ohm";
+	$parametric = true;
+	$failOnLimits = true;
+	RecordMeasurementWithLimits($measName, $final_value, $measUnit, $parametric, $lowerLimit, $upperLimit, $failOnLimits);
+	
+return;
+}
+
+Label end:
 
 ///$close = ExcelCloseFile("C:\\Users\\2343690\\OneDrive - Jabil\\Jupiter_docs\\Copy of hoja_de_cargado.xlsx");
 
