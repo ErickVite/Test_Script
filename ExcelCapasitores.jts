@@ -1,0 +1,24 @@
+
+
+$Excel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\Jupiter_docs\\capacitores.xlsx");	//*** Direccion local del .xlsx ***
+$attemp_function_excel = 0;
+$cell = 2;	
+
+while($attemp_function_excel < 119)
+{
+	$Value = ExcelGetCell($Excel,2,"D",$cell);
+	UpdateStatus($Value);																	//*** R QUE SE ESTA CoMPARANDO ***
+	
+	($Found,$Column,$Row) = ExcelSearchForValue($Excel,1,"K","EA",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENCIA EN EL SHEET HOJA DE CARGADO ***
+
+	$Value_bom = ExcelGetCell($Excel,1,"A",$Row);											//*** VALOR DE LA R QUE SE COMPARARA ***
+	UpdateStatus($Value_bom);
+	
+	($Found2,$Column2,$Row2) = ExcelSearchForValue($Excel,3,"A","AZ",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENSIA EN EL SHEET BOOM
+	
+	$Value_hoja = ExcelGetCell($Excel,3,"A",$Row2);
+	UpdateStatus($Value_hoja);
+	
+	$attemp_function_excel = $attemp_function_excel +1 ;
+		$cell = $cell + 1;
+}

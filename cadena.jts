@@ -1,0 +1,6 @@
+
+$cadena = "([{}])";
+UpdateStatus($cadena);
+
+$new1DArray = Array1DCreate("STRING", 6);      
+UpdateStatus($new1DArray);

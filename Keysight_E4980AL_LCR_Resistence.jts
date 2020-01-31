@@ -21,12 +21,12 @@ function DMM_MeasureResistance_LCR()
 
 	$CommandString = "*RST";
 	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
-	$CommandString = "FUNC:IMP RX";
+	$CommandString = "FUNC:IMP CPQ";
 	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
-	$CommandString = ":FETC:IMP:CORR";
+	//$CommandString = ":FETC:IMP:CORR?";
+	$CommandString = ":FETC:IMP?";
 	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
-		$CommandString = "*IDN?";
-	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+
 	
 	SleepMilliseconds(1000);
 
@@ -46,7 +46,12 @@ $numSplits = 2;
 ($spl1, $spl2) = StringSplit($stringToSplit, $splitChar, $numSplits);
 	//UpdateStatus($spl1); 
 	//$DMM_Resistance = Round($spl1,5);
-	//UpdateStatus($DMM_Resistance);
+	$DMM_Resistance = $spl1 * 1E+09;
+	UpdateStatus($DMM_Resistance);
+	$nDMM_Resistance = Round($DMM_Resistance,5)
+	UpdateStatus($nDMM_Resistance);
+//		$DMM_Resistance = Round($spl2,5);
+//	UpdateStatus($DMM_Resistance);
 	
 $measName = "Resisitence";
 $measUnit = "Ohm";

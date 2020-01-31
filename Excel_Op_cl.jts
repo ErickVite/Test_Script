@@ -1,0 +1,7 @@
+//$MyExcel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\Excel_Pruebas\\Book1.xlsx");
+$MyExcel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\Jupiter_docs\\capacitores.xlsx");
+
+$Value = ExcelGetCell($MyExcel,4,"A",1);
+UpdateStatus($Value);
+
+ExcelCloseFile($MyExcel);

@@ -1,0 +1,214 @@
+//Jabil Test Script File
+// Customer: Enterprise
+// Division: Green Point
+// Software Name: Keysight_E4980AL_LCR_capacitores
+// Created by: Erick Vite
+// Contact: erick_vite@jabil.com
+// Software Ver: 0.0.0 (Dev)
+// January 31, 2020
+
+//********** Global variables **************
+$EqAddr = "USB0::0x2A8D::0x2F01::MY54407783::0::INSTR";
+//********** Global variables **************
+
+
+
+$Excel = ExcelOpenFile("C:\\Users\\2343690\\Desktop\\Jupiter_docs\\capacitores.xlsx");	//*** Direccion local del .xlsx ***
+$attemp_function_excel = 0;
+$cell = 2;	
+
+$incorrect_measures = 0;
+
+$incorrect_count_success_measures = 0;
+$final_value = 0;
+
+call excel_lcr_capacitancia();
+
+End;
+
+function excel_lcr_capacitancia()
+{
+while($attemp_function_excel < 3)//119
+	{
+	$Value = ExcelGetCell($Excel,2,"D",$cell);
+	UpdateStatus($Value);																	//*** R QUE SE ESTA CoMPARANDO ***
+	
+	($Found,$Column,$Row) = ExcelSearchForValue($Excel,1,"K","EA",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENCIA EN EL SHEET bom ***
+	$Value_bom = ExcelGetCell($Excel,1,"A",$Row);											//*** VALOR DE LA R QUE SE COMPARARA ***
+	UpdateStatus($Value_bom);
+	
+	($Found2,$Column2,$Row2) = ExcelSearchForValue($Excel,3,"A","AZ",1,100,$Value,"FALSE");		//*** BUSQUEDA DE LA RESISTENSIA EN EL SHEET HOJA DE CARGADO
+	$Value_hoja = ExcelGetCell($Excel,3,"A",$Row2);
+	UpdateStatus($Value_hoja);
+	
+	//*** Set up variables max & min
+	$MIN = ExcelGetCell($Excel,3,"D",$Row);											//**** pueba de valores max and min
+	$StringMIN = "Valor Minimo: " + $MIN + " Faradios";
+	UpdateStatus($StringMIN);
+	$MinRange = $MIN;
+	
+	$MAX = ExcelGetCell($Excel,3,"E",$Row);											//**** pueba de valores max and min
+	$StringMAX = "Valor Maximo: " + $MAX + " Faradios";
+	UpdateStatus($StringMAX);
+	$MaxRange = $MAX;
+	
+	$lowerLimit = $MinRange;
+	$upperLimit = $MaxRange;
+	//*** Set up variables max & min
+	
+	if($Value_hoja == $Value_bom)
+		{
+		$count_Repetir = 0;
+		Label Repetir:
+		$count_while_procese_cap = 0;
+		$success_measures = 0;
+		$count_success_measures = 0;
+		$final_value = 0;
+		$incorrect_measures = 0;
+		$incorrect_count_success_measures = 0;
+		
+		$Capacitor_a_medir = "Capacitor a medir:\t C" + $Value ;
+		$NoImagen = "C:\\Users\\2343690\\OneDrive - Jabil\\Jupiter_docs\\Images\\R" + $Value + ".png";
+		$ButtonText = OperatorPicturePromptSpecifyOptionsWithPosition($Capacitor_a_medir, $NoImagen, "CENTER", 870, 1700, "Continuar", 100, 100);
+		call process_capacitancia();
+		
+		if(($final_value > $lowerLimit) && ($final_value < $upperLimit))
+		{
+			UpdateStatus("RESISTENCIA CORRECTA!")
+			$text = "Pueba Correcta.";
+			$btn1Txt = "Continuar";
+			$btn2Txt = "";
+			$btn1Key = "F1";
+			$btn2Key = "F2";
+			$textSize = 20;
+			$opacity = 90;
+			$width = 800;
+			$height = 450;
+			$left = 300;
+			$top = 300;
+			$result = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+		}
+		
+		if(($final_value < $lowerLimit) || ($final_value > $upperLimit))
+		{
+		
+			UpdateStatus("RESISTENCIA INCORRECTA!")
+			$nc = 2 - $count_Repetir;
+			$stInc = "Prueba INCORRECTA " + $nc + " intentos restantes";
+			$text = $stInc;
+			$btn1Txt = "Continuar";
+			$btn2Txt = "Repetir";
+			$btn1Key = "F1";
+			$btn2Key = "F2";
+			$textSize = 20;
+			$opacity = 90;
+			$width = 800;
+			$height = 450;
+			$left = 300;
+			$top = 300;
+			$resultInc = ShowTextDialogWithLocation($text, $btn1Txt, $btn2Txt, $btn1Key, $btn2Key, $textSize, $opacity, $width, $height, $left, $top);
+			
+				if(($resultInc == "Repetir") && $count_Repetir < 2)
+				{
+				//UpdateStatus("REPETIR")
+			
+				$count_Repetir = $count_Repetir + 1;
+					goto Repetir;
+				}
+		}
+		
+		
+		
+		
+		}	
+	$attemp_function_excel = $attemp_function_excel + 1;
+	$cell = $cell + 1;
+	}
+}
+
+function medicion_capacitancia()
+{
+	$inductancia_value = 0;
+	$DMM_Timeout = 1000;
+	($DMM_Handle, $ConnectionStatus) = IviVISA_OpenBool($EqAddr, $DMM_Timeout)
+	$CommandString = "*RST";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	$CommandString = "FUNC:IMP CPQ";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	//$CommandString = ":FETC:IMP:CORR?";
+	$CommandString = ":FETC:IMP?";
+	$success = IviVISA_WriteBool($DMM_Handle, $CommandString);
+	SleepMilliseconds(1000);
+	($ReplyString, $success) =  IviVISA_ReadBool($DMM_Handle);
+		//UpdateStatus($ReplyString);
+
+	$stringToSplit = $ReplyString ;
+	$splitChar = ",";
+	$numSplits = 2;
+	($spl1, $spl2) = StringSplit($stringToSplit, $splitChar, $numSplits);
+	
+	$int_mult = ExcelGetCell($Excel,3,"B",$Row2);
+	$multiplicador = 0;
+	if ($int_mult == "uF")
+		{
+		$multiplicador = 1E+6;
+		}
+	if ($int_mult == "nF")
+		{
+		$multiplicador = 1E+9;
+		}
+	if ($int_mult == "pF")
+		{
+		$multiplicador = 1E+12;
+		}
+	$inductancia_value = $spl1 * $multiplicador;
+	 
+	//UpdateStatus("*****");
+	UpdateStatus($inductancia_value);
+	//UpdateStatus("*****");
+	$floatinductancia_value = StringToFloat($inductancia_value);
+
+	return;
+}
+
+function process_capacitancia()
+{
+$success_measures = 0;
+$count_success_measures = 0;
+$final_value = 0;
+$incorrect_measures = 0;
+$incorrect_count_success_measures = 0;
+
+	while( $count_while_procese_cap < 8)
+	{
+	call medicion_capacitancia();
+	
+	if(($floatinductancia_value > $lowerLimit) && ($floatinductancia_value < $upperLimit))
+		{
+			//success_measures
+			$success_measures = $success_measures + $floatinductancia_value;
+			$count_success_measures = $count_success_measures + 1;
+			$final_value = $success_measures / $count_success_measures;
+			//UpdateStatus($final_value);
+		}
+	if(($floatinductancia_value < $lowerLimit) || ($floatinductancia_value > $upperLimit))
+		{
+			$incorrect_measures = $incorrect_measures + $floatinductancia_value;
+			$incorrect_count_success_measures = $incorrect_count_success_measures + 1;
+			$final_value = $incorrect_measures / $incorrect_count_success_measures;
+		}
+	$count_while_procese_cap = $count_while_procese_cap + 1;
+	}
+	//UpdateStatus("*****");
+	UpdateStatus($final_value);
+	//UpdateStatus("****");
+	// Record a voltage measurement and pass the test.
+	$measName = "Resistance";
+	$measUnit = "Ohm";
+	$parametric = true;
+	$failOnLimits = true;
+	RecordMeasurementWithLimits($measName, $final_value, $measUnit, $parametric, $lowerLimit, $upperLimit, $failOnLimits);
+	
+return;
+}
+
